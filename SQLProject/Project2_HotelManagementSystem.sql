@@ -5365,16 +5365,43 @@ as SELECT * FROM Bookings WHERE TotalAmount > 20000;
 
 -- Question - 206] Create a trigger to automatically delete a payment when its corresponding booking is deleted.
 
--- DELIMITER //
--- CREATE TRIGGER DeletePaymentWHENBookingDelete
--- BEFORE 
-
--- //
+DELIMITER //
+CREATE TRIGGER DeletePaymentWHENBookingDelete
+AFTER DELETE ON Bookings
+FOR EACH ROW
+BEGIN
+    DELETE FROM payments
+    WHERE BookingID = OLD.BookingID;
+END
+//
 -- Question - 207] Create a trigger to prevent insertion of a booking where CheckOutDate < CheckInDate.
 
+DELIMITER //
+
+CREATE TRIGGER ValidateBookingDates
+BEFORE INSERT ON bookings
+FOR EACH ROW
+BEGIN
+    IF NEW.CheckOutDate < NEW.CheckInDate THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Error: You cannot check out before you check in!';
+    END IF;
+END
+//
 
 
 -- Question - 208] Create a trigger to automatically update TotalAmount in Bookings when a payment is inserted in Payments.update customers
 
+DELIMITER //
 
+CREATE TRIGGER UpdateTotalAmountAfterPayment
+AFTER INSERT ON Payments
+FOR EACH ROW
+BEGIN
+    UPDATE Bookings 
+    SET TotalAmount = TotalAmount + NEW.Amount
+    WHERE BookingID = NEW.BookingID;
+END
+//
 
+select * from customers;
